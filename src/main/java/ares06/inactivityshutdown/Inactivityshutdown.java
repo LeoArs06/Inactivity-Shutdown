@@ -15,24 +15,29 @@ public final class Inactivityshutdown extends JavaPlugin {
     private PlayerQuitListener playerQuitListener;
     private PlayerJoinListener playerJoinListener;
     private Timer idleTimer;
-
     @Override
     public void onEnable() {
         this.log = getLogger();
-
-        //Write the default config, if it does not exist.
         saveDefaultConfig();
 
+        // Check if the plugin is enabled in the config
+        boolean pluginEnabled = getConfig().getBoolean("Enabled");
+        if (!pluginEnabled) {
+            log.info("Inactivityshutdown plugin is disabled in the config. Plugin will not be loaded.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
         // Get the current config
-        this.inactivityTimeout = getConfig().getInt("inactivityTimeout");
+        this.inactivityTimeout = getConfig().getInt("InactivityTimeout");
 
         if (this.inactivityTimeout < 0) {
-            log.warning("You cannot use a negative idle_wait_time! Time set to 0 seconds.");
+            log.warning("You cannot use a negative inactivityTimeout! Time set to 0 seconds.");
             this.inactivityTimeout = 0;
         }
 
-        log.info(String.format(("This server is running IdleShutdown: " +
-                        "It will stop after %d seconds with no player online."),
+        log.info(String.format("This server is running InactivityShutdown: " +
+                        "It will stop after %d seconds with no player online.",
                 this.inactivityTimeout));
 
         this.playerQuitListener = new PlayerQuitListener(this);
