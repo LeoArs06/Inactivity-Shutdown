@@ -5,21 +5,23 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.entity.Player;
 
-
 public final class Inactivityshutdown extends JavaPlugin {
     private int inactivityTimeout; // in seconds
     private int taskId;
+    private boolean pluginEnabled;
 
     @Override
     public void onEnable() {
-        saveDefaultConfig(); // Salva il file di configurazione predefinito se non esiste
+        saveDefaultConfig(); // Save the default configuration file if it doesn't exist
 
         FileConfiguration config = getConfig();
-        inactivityTimeout = config.getInt("inactivityTimeout", 1800); // Prende il valore dal file di configurazione, default 1800 secondi (30 minuti)
+        inactivityTimeout = config.getInt("inactivityTimeout", 1800); // Get value from the configuration file, default 1800 seconds (30 minutes)
+        pluginEnabled = config.getBoolean("Enabled", false); // Get the plugin's state from the configuration file, default disabled
 
-        getServer().getPluginManager().registerEvents(new PlayerActivityListener(), this);
-
-        startInactivityCheckTask();
+        if (pluginEnabled) {
+            getServer().getPluginManager().registerEvents(new PlayerActivityListener(), this);
+            startInactivityCheckTask();
+        }
     }
 
     @Override
@@ -34,15 +36,15 @@ public final class Inactivityshutdown extends JavaPlugin {
     private void startInactivityCheckTask() {
         taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
             long currentTime = System.currentTimeMillis();
-            if (PlayerActivityListener.getLastActivityTime() + (inactivityTimeout * 1000) < currentTime) {
+            if (pluginEnabled && PlayerActivityListener.getLastActivityTime() + (inactivityTimeout * 1000) < currentTime) {
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     if (player.getLastPlayed() + (inactivityTimeout * 1000) >= currentTime) {
-                        // Almeno un giocatore attivo trovato, non spegnere il server
+                        // At least one active player found, do not shutdown the server
                         return;
                     }
                 }
-                Bukkit.shutdown(); // Spegni il server solo se nessun giocatore attivo è stato trovato
+                Bukkit.shutdown(); // Shutdown the server only if no active players were found
             }
-        }, 0L, 20L * 60L); // Controlla ogni minuto
+        }, 0L, 20L * 60L); // Check every minute
     }
 }
