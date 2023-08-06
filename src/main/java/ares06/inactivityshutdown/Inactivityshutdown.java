@@ -36,14 +36,17 @@ public final class Inactivityshutdown extends JavaPlugin {
     private void startInactivityCheckTask() {
         taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
             long currentTime = System.currentTimeMillis();
-            if (pluginEnabled && PlayerActivityListener.getLastActivityTime() + (inactivityTimeout * 1000) < currentTime) {
+            if (pluginEnabled) {
+                boolean activePlayersFound = false;
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     if (player.getLastPlayed() + (inactivityTimeout * 1000) >= currentTime) {
-                        // At least one active player found, do not shutdown the server
-                        return;
+                        activePlayersFound = true;
+                        break;
                     }
                 }
-                Bukkit.shutdown(); // Shutdown the server only if no active players were found
+                if (!activePlayersFound) {
+                    Bukkit.shutdown(); // Shutdown the server only if no active players were found
+                }
             }
         }, 0L, 20L * 60L); // Check every minute
     }
