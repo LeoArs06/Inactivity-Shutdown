@@ -85,7 +85,7 @@ public final class Inactivityshutdown extends JavaPlugin {
         this.idleTimer.cancel();
     }
 
-    private boolean lastPlayerOnline() {y
+    private boolean lastPlayerOnline() {
         if (getServer().getOnlinePlayers().size() <= 1) {
             return true;
         } else {
