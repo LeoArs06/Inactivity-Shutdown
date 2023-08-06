@@ -1,0 +1,3 @@
+name: inactivityshutdown
+version: '${project.version}'
+main: ares06.inactivityshutdown.Inactivityshutdown
