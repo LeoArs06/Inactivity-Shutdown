@@ -3,7 +3,7 @@
 This Bukkit Paper plugin automatically shuts down the server after a specified period of inactivity.
 
 ## Features
-
+- Supports Minecraft 1.12, 1.13, 1.14, 1.15, 1.16, 1.17, 1.18, 1.19, 1.20
 - Automatically shuts down the server after a configurable period of inactivity.
 - Supports customizing the inactivity timeout duration.
 
