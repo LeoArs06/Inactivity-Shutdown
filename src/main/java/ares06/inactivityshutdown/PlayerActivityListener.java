@@ -9,7 +9,7 @@ public class PlayerActivityListener implements Listener {
     private static long lastActivityTime = System.currentTimeMillis();
 
     public PlayerActivityListener() {
-        // Costruttore vuoto
+
     }
 
     @EventHandler
