@@ -6,5 +6,5 @@ Enabled: false
 #inactivityTimeout in seconds
 #default 1800 second = 30 minutes
 
-inactivityTimeout: 1800
+InactivityTimeout: 1800
 
