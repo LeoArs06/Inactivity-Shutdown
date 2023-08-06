@@ -1,2 +1,9 @@
 #inactivityshutdown by ares06
+#v1.0
+
+#inactivityTimeout in seconds
+#default 1800 second = 30 minutes
+
 inactivityTimeout: 1800
+
+Enabled: false
