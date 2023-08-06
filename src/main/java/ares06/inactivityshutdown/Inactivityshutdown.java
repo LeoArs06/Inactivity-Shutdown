@@ -3,6 +3,8 @@ package ares06.inactivityshutdown;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.entity.Player;
+
 
 public final class Inactivityshutdown extends JavaPlugin {
     private int inactivityTimeout; // in seconds
@@ -31,8 +33,15 @@ public final class Inactivityshutdown extends JavaPlugin {
 
     private void startInactivityCheckTask() {
         taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
-            if (PlayerActivityListener.getLastActivityTime() + (inactivityTimeout * 1000) < System.currentTimeMillis()) {
-                Bukkit.shutdown(); // Spegni il server se non ci sono state attività nell'intervallo di tempo specificato
+            long currentTime = System.currentTimeMillis();
+            if (PlayerActivityListener.getLastActivityTime() + (inactivityTimeout * 1000) < currentTime) {
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    if (player.getLastPlayed() + (inactivityTimeout * 1000) >= currentTime) {
+                        // Almeno un giocatore attivo trovato, non spegnere il server
+                        return;
+                    }
+                }
+                Bukkit.shutdown(); // Spegni il server solo se nessun giocatore attivo è stato trovato
             }
         }, 0L, 20L * 60L); // Controlla ogni minuto
     }
