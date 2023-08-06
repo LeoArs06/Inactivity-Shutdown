@@ -10,106 +10,117 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class Inactivityshutdown extends JavaPlugin {
-    private Logger logger;
-    private int idleWaitTime;
+    private Logger log;
+    private Integer inactivityTimeout;
+    private PlayerQuitListener playerQuitListener;
+    private PlayerJoinListener playerJoinListener;
     private Timer idleTimer;
-
-    private final Listener playerQuitListener = new PlayerQuitListener(this);
-    private final Listener playerJoinListener = new PlayerJoinListener(this);
 
     @Override
     public void onEnable() {
-        logger = getLogger();
-        saveDefaultConfig();
-        idleWaitTime = Math.max(0, getConfig().getInt("idle_wait_time"));
-        logger.info("This server is running IdleShutdown: It will stop after " + idleWaitTime + " seconds with no player online.");
+        this.log = getLogger();
 
-        registerEvent(playerQuitListener);
+        //Write the default config, if it does not exist.
+        saveDefaultConfig();
+
+        // Get the current config
+        this.inactivityTimeout = getConfig().getInt("inactivityTimeout");
+
+        if (this.inactivityTimeout < 0) {
+            log.warning("You cannot use a negative idle_wait_time! Time set to 0 seconds.");
+            this.inactivityTimeout = 0;
+        }
+
+        log.info(String.format(("This server is running IdleShutdown: " +
+                        "It will stop after %d seconds with no player online."),
+                this.inactivityTimeout));
+
+        this.playerQuitListener = new PlayerQuitListener(this);
+        this.playerJoinListener = new PlayerJoinListener(this);
+
+        getServer().getPluginManager()
+                .registerEvents(this.playerQuitListener, this);
 
         if (noPlayerOnline()) {
-            logger.fine("There are no players online!");
             startIdleTimer();
         }
     }
 
     @Override
     public void onDisable() {
-        cancelIdleTimer();
-        unregisterAllListeners();
+        // Cancel the timer and remove all Listeners
+        if (this.idleTimer != null) {
+            log.finer("Cancelling timer");
+            this.idleTimer.cancel();
+        }
+        HandlerList.unregisterAll(this);
     }
 
     public void onTimerExpired() {
-        logger.fine("Timer expired!");
+        if(noPlayerOnline()) {
+            log.info("No players online, shutting down");
 
-        if (noPlayerOnline()) {
-            logAndShutdown("No players online, shutting down");
-        } else {
-            logger.warning("A player has come online and we have not been notified! Something is wrong.");
+            //Remove all our Listeners
+            HandlerList.unregisterAll(this);
+
+            getServer().shutdown();
         }
     }
 
     void onPlayerQuit() {
-        logger.fine("A player has quit!");
-
         if (lastPlayerOnline()) {
-            logger.info("The last player is leaving!");
+            log.info("The last player is leaving!");
             startIdleTimer();
         }
     }
 
     void onPlayerJoin() {
-        logger.fine("A player has joined!");
+        log.fine("A player has joined!");
 
-        unregisterAllListeners();
-        cancelIdleTimer();
+        // Remove the Listener
+        log.finer("Unregistering PlayerJoinListener...");
+        HandlerList.unregisterAll(this.playerJoinListener);
+
+        log.finer("Aborting timer...");
+        this.idleTimer.cancel();
     }
 
-    private void registerEvent(Listener listener) {
-        getServer().getPluginManager().registerEvents(listener, this);
-    }
-
-    private boolean lastPlayerOnline() {
-        return getServer().getOnlinePlayers().size() <= 1;
-    }
-
-    private boolean noPlayerOnline() {
-        return getServer().getOnlinePlayers().isEmpty();
-    }
-
-    private void cancelIdleTimer() {
-        if (idleTimer != null) {
-            logger.finer("Cancelling timer...");
-            idleTimer.cancel();
+    private boolean lastPlayerOnline() {y
+        if (getServer().getOnlinePlayers().size() <= 1) {
+            return true;
+        } else {
+            return false;
         }
     }
 
-    private void unregisterAllListeners() {
-        logger.finer("Unregistering listeners...");
-        HandlerList.unregisterAll(this);
-    }
-
-    private void logAndShutdown(String message) {
-        logger.info(message);
-        unregisterAllListeners();
-        getServer().shutdown();
+    private boolean noPlayerOnline() {
+        if (getServer().getOnlinePlayers().size() <= 0) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private void startIdleTimer() {
-        if (idleWaitTime == 0) {
-            logger.fine("idle_wait_time is 0, not scheduling timer!");
+        if (this.inactivityTimeout == 0) {
+            log.fine("idle_wait_time is 0, not scheduling timer!");
             onTimerExpired();
         } else {
-            registerEvent(playerJoinListener);
 
-            logger.finer("Creating and scheduling timer...");
-            idleTimer = new Timer();
+            log.finer("Registering PlayerJoinListener...");
+            getServer().getPluginManager()
+                    .registerEvents(this.playerJoinListener, this);
+
+            log.finer("Creating and scheduling timer...");
+            this.idleTimer = new Timer();
             TimerTask idleTimerTask = new TimerTask() {
                 @Override
                 public void run() {
                     onTimerExpired();
                 }
             };
-            idleTimer.schedule(idleTimerTask, idleWaitTime * 1000);
+            this.idleTimer.schedule(idleTimerTask, this.inactivityTimeout*1000);
         }
     }
 }
+
