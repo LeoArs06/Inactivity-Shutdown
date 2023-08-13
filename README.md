@@ -1,4 +1,4 @@
-# InactivityShutdown
+# Inactivity Shutdown
 
 This Bukkit Paper plugin automatically shuts down the server after a specified period of inactivity.
 
